@@ -250,6 +250,8 @@ function loop(ts) {
       current.y++;
     } else {
       lockPiece();
+      // endGame() ya se ejecutó dentro de este frame: no dibujar ni programar otro
+      if (gameOver) return;
     }
   }
   draw();
