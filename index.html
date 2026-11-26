@@ -53,11 +53,35 @@
       </aside>
     </div>
 
+    <div id="start-screen" class="overlay">
+      <div class="overlay-box">
+        <p class="overlay-heading">RECORDS</p>
+        <div id="start-records" class="records"></div>
+        <button id="start-btn" class="btn" type="button">Jugar</button>
+        <button class="btn-secondary reset-records-btn" type="button">Borrar records</button>
+        <p class="storage-warning hidden">No se puede usar el almacenamiento: los records solo duran esta sesión.</p>
+      </div>
+    </div>
+
     <div id="overlay" class="overlay hidden">
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+        <div id="game-over-panel" class="overlay-box hidden">
+          <p id="record-message" role="status"></p>
+          <form id="record-form" class="record-form hidden" autocomplete="off">
+            <label for="player-name">Tu nombre</label>
+            <div class="record-form-row">
+              <input id="player-name" type="text" maxlength="12" placeholder="Anónimo" spellcheck="false" />
+              <button class="btn" type="submit">Guardar</button>
+            </div>
+            <small>Si no pulsas Guardar, se guardará al reiniciar o salir.</small>
+          </form>
+          <div id="over-records" class="records"></div>
+          <button class="btn-secondary reset-records-btn" type="button">Borrar records</button>
+          <p class="storage-warning hidden">No se puede usar el almacenamiento: los records solo duran esta sesión.</p>
+        </div>
+        <button id="restart-btn" class="btn" type="button">Reiniciar</button>
       </div>
     </div>
   </div>
