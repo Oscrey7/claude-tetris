@@ -10,11 +10,18 @@
     } catch (e) {
       document.documentElement.dataset.theme = 'dark';
     }
+    try {
+      const skin = localStorage.getItem('skin');
+      document.documentElement.dataset.skin = ['retro', 'neon', 'pastel', 'pixel'].includes(skin) ? skin : 'retro';
+    } catch (e) {
+      document.documentElement.dataset.skin = 'retro';
+    }
   </script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Cambiar entre modo claro y oscuro"></button>
+  <select id="skin-select" class="skin-select" aria-label="Seleccionar skin visual"></select>
   <div class="page">
   <h1 class="title">TETRIS K1</h1>
   <div class="wrapper">

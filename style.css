@@ -226,3 +226,33 @@ kbd {
 .theme-toggle:hover {
   border-color: var(--accent);
 }
+
+/* ---- Skins ---- */
+[data-skin="neon"] #board,
+[data-skin="neon"] #next-canvas {
+  background: #000000;
+}
+
+.skin-select {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  background: var(--canvas-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skin-select:hover {
+  border-color: var(--accent);
+}
+
+.skin-select option {
+  background: var(--canvas-bg);
+  color: var(--text);
+}

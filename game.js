@@ -28,6 +28,107 @@ const PIECES = [
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
 
+// ---- Skins ----
+// Cada skin pinta un bloque a partir de su esquina (px, py) en píxeles.
+// `boardBg` y `grid` a null usan las variables CSS del tema claro/oscuro.
+// Un `boardBg` propio debe repetirse en style.css para [data-skin].
+// `colors` se indexa por tipo de pieza (1–7), igual que PIECES.
+// Un skin nuevo debe añadirse también a la lista del <script> de index.html.
+function roundedRectPath(context, x, y, w, h, r) {
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+const SKINS = {
+  retro: {
+    name: 'Retro',
+    colors: COLORS,
+    boardBg: null,
+    grid: null,
+    drawBlock(context, px, py, size, color) {
+      context.fillStyle = color;
+      context.fillRect(px + 1, py + 1, size - 2, size - 2);
+      // highlight
+      context.fillStyle = 'rgba(255,255,255,0.12)';
+      context.fillRect(px + 1, py + 1, size - 2, 4);
+    },
+  },
+  neon: {
+    name: 'Neon',
+    colors: [null, '#00fff0', '#fff200', '#d400ff', '#39ff14', '#ff1744', '#7da6ff', '#ff8c00'],
+    boardBg: '#000000',
+    grid: '#161622',
+    drawBlock(context, px, py, size, color, alpha) {
+      context.shadowColor = color;
+      context.shadowBlur = alpha < 1 ? 0 : 12; // el fantasma no brilla
+      context.fillStyle = color;
+      context.fillRect(px + 3, py + 3, size - 6, size - 6);
+      context.shadowBlur = 0;
+      // centro oscuro para resaltar el borde luminoso
+      context.fillStyle = 'rgba(0,0,0,0.45)';
+      context.fillRect(px + 7, py + 7, size - 14, size - 14);
+    },
+  },
+  pastel: {
+    name: 'Pastel',
+    colors: [null, '#9ddce8', '#f7df94', '#cdaee8', '#aedcb0', '#f2a9ab', '#b5cdf5', '#f8c49c'],
+    boardBg: null,
+    grid: null,
+    drawBlock(context, px, py, size, color, alpha) {
+      roundedRectPath(context, px + 1.5, py + 1.5, size - 3, size - 3, size / 4);
+      context.fillStyle = color;
+      context.fill();
+      if (alpha < 1) {
+        // contorno más opaco para que el fantasma se vea sobre fondo claro
+        context.globalAlpha = Math.min(1, alpha * 3);
+        context.strokeStyle = color;
+        context.lineWidth = 1.5;
+        context.stroke();
+      } else {
+        roundedRectPath(context, px + 6, py + 4, size - 12, size / 5, size / 10);
+        context.fillStyle = 'rgba(255,255,255,0.45)';
+        context.fill();
+      }
+    },
+  },
+  pixel: {
+    name: 'Pixel art',
+    colors: [null, '#22b8d6', '#e6bc22', '#9b4dca', '#43a847', '#d63c3c', '#78a9e8', '#e67e22'],
+    boardBg: null,
+    grid: null,
+    drawBlock(context, px, py, size, color) {
+      const u = (size - 2) / 7; // rejilla de 7x7 "píxeles"
+      const x = px + 1;
+      const y = py + 1;
+      const side = u * 7;
+      context.fillStyle = color;
+      context.fillRect(x, y, side, side);
+      // trama interior (dithering)
+      for (let r = 1; r < 6; r++) {
+        for (let c = 1; c < 6; c++) {
+          if ((r + c) % 2) continue;
+          context.fillStyle = r + c < 6 ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
+          context.fillRect(x + c * u, y + r * u, u, u);
+        }
+      }
+      // bisel: luz arriba/izquierda, sombra abajo/derecha
+      context.fillStyle = 'rgba(255,255,255,0.45)';
+      context.fillRect(x, y, side, u);
+      context.fillRect(x, y + u, u, side - u);
+      context.fillStyle = 'rgba(0,0,0,0.4)';
+      context.fillRect(x + u, y + side - u, side - u, u);
+      context.fillRect(x + side - u, y + u, u, side - 2 * u);
+    },
+  },
+};
+
+let activeSkin = SKINS.retro;
+
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next-canvas');
@@ -158,18 +259,26 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
-  context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  context.globalAlpha = 1;
+  const a = alpha ?? 1;
+  context.save(); // restore() deshace alpha, sombras y demás estado del skin
+  context.globalAlpha = a;
+  activeSkin.drawBlock(context, x * size, y * size, size, activeSkin.colors[colorIndex], a);
+  context.restore();
+}
+
+function clearCanvas(context) {
+  const { width, height } = context.canvas;
+  context.clearRect(0, 0, width, height);
+  if (activeSkin.boardBg) {
+    context.fillStyle = activeSkin.boardBg;
+    context.fillRect(0, 0, width, height);
+  }
 }
 
 function drawGrid() {
-  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim() || '#22222e';
+  ctx.strokeStyle = activeSkin.grid
+    || getComputedStyle(document.documentElement).getPropertyValue('--grid').trim()
+    || '#22222e';
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -186,13 +295,16 @@ function drawGrid() {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  clearCanvas(ctx);
   drawGrid();
 
   // board
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       drawBlock(ctx, c, r, board[r][c], BLOCK);
+
+  // tras el Game Over la pieza actual solapa el tablero: no se pinta
+  if (gameOver) return;
 
   // ghost
   const gy = ghostY();
@@ -209,7 +321,7 @@ function draw() {
 
 function drawNext() {
   const NB = 30;
-  nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+  clearCanvas(nextCtx);
   const shape = next.shape;
   const offX = Math.floor((4 - shape[0].length) / 2);
   const offY = Math.floor((4 - shape.length) / 2);
@@ -221,6 +333,7 @@ function drawNext() {
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
+  draw(); // deja pintado el tablero definitivo bajo el overlay
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
   overlay.classList.remove('hidden');
@@ -320,5 +433,32 @@ themeBtn.addEventListener('click', () => {
 });
 
 setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+
+const skinSelect = document.getElementById('skin-select');
+
+for (const [key, { name }] of Object.entries(SKINS)) skinSelect.add(new Option(name, key));
+
+function setSkin(key) {
+  const valid = Object.prototype.hasOwnProperty.call(SKINS, key) ? key : 'retro';
+  activeSkin = SKINS[valid];
+  skinSelect.value = valid;
+  document.documentElement.dataset.skin = valid;
+  try { localStorage.setItem('skin', valid); } catch (e) { /* sin almacenamiento */ }
+  if (current && next) { draw(); drawNext(); }
+}
+
+skinSelect.addEventListener('change', () => {
+  setSkin(skinSelect.value);
+  skinSelect.blur(); // las flechas vuelven al juego en lugar de cambiar de opción
+});
+
+// Si el selector conserva el foco (p. ej. se cerró sin cambiar), las teclas del juego no deben usarlo
+skinSelect.addEventListener('keydown', e => {
+  if (e.altKey || !/^(Arrow(Left|Right|Up|Down)|Space|KeyP|KeyX)$/.test(e.code)) return;
+  e.preventDefault();
+  skinSelect.blur();
+});
+
+setSkin(document.documentElement.dataset.skin);
 
 init();
