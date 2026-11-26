@@ -42,6 +42,21 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Sistema de puntuación** clásico de Tetris (100 / 300 / 500 / 800 multiplicado por nivel).
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Menú de pausa** (reanudar, reiniciar, ver controles y elegir nivel inicial) y **Game Over** con opción de reinicio.
+- **Pantalla de inicio** y **tabla de records local** (top 5, mejor combo y líneas máximas).
+
+---
+
+## Records
+
+Los records se guardan en el `localStorage` del navegador (clave `tetris-records`) y se muestran en la pantalla de inicio y en el Game Over.
+
+- **Top 5**: si la puntuación entra en la tabla, su puesto se resalta y puedes escribir tu nombre (máximo 12 caracteres; si lo dejas vacío se guarda como «Anónimo»). Una puntuación de 0 no entra y, en caso de empate, el record más antiguo conserva el puesto.
+- Si reinicias, cierras o recargas la página sin pulsar **Guardar**, la puntuación se guarda igualmente con el nombre escrito hasta ese momento.
+- **Mejor combo**: máximo número de piezas consecutivas fijadas que eliminan al menos una línea (una pieza que no elimina ninguna lo reinicia). No altera la puntuación.
+- **Líneas máximas**: mayor número de líneas eliminadas en una sola partida.
+- El mejor combo y las líneas máximas se actualizan durante la partida, entre o no la puntuación en el top 5.
+- El botón **Borrar records** pide confirmación y elimina la tabla, el mejor combo y las líneas máximas.
+- Si el almacenamiento no está disponible, el juego funciona igual y los records duran solo hasta recargar la página.
 
 ---
 
@@ -97,6 +112,8 @@ Al pausar aparece un menú con estas opciones:
 
 Mientras el menú está abierto las teclas de juego no tienen efecto. Una tecla que siga pulsada al reanudar no actúa hasta volver a pulsarla.
 
+La partida empieza al pulsar **Jugar** en la pantalla de inicio. Mientras escribes tu nombre, las teclas no controlan el juego.
+
 ---
 
 ## Cómo funciona
@@ -109,7 +126,8 @@ Define la estructura visual:
 
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel lateral con `SCORE`, `LINES`, `LEVEL`, vista de la siguiente pieza y la lista de controles.
-- Un overlay para el **menú de pausa** y el estado **GAME OVER**.
+- Un overlay de inicio con los records.
+- Un overlay para el **menú de pausa** y el estado **GAME OVER** (este último con el formulario de nombre y los records).
 
 ### 2. `style.css`
 
@@ -128,11 +146,15 @@ Contiene toda la lógica del juego. A grandes rasgos:
 - **Puntuación**: usa la tabla clásica `[0, 100, 300, 500, 800]` multiplicada por el nivel actual; el hard drop suma 2 puntos por celda recorrida y el soft drop 1 punto por fila.
 - **Nivel y velocidad**: la partida empieza en el nivel inicial elegido (1 por defecto) y sube un nivel cada 10 líneas; la velocidad de caída se calcula como `max(100, 1000 − (level − 1) × 90)` milisegundos (`speedFor`).
 - **Ghost piece** (`ghostY`): proyecta la posición final de la pieza actual hacia abajo y la dibuja con `globalAlpha = 0.2`.
+- **Records** (`readRecords`, `writeRecords`, `commitPending`): validan lo leído de `localStorage` (datos corruptos o manipulados se descartan) e insertan los nombres en la página como texto, nunca como HTML.
 
 ### Flujo del juego
 
 ```
+carga de la página → renderRecords()   (pantalla de inicio)
+        ↓  botón "Jugar" / "Reiniciar"
 init()
+  ├─ commitPending()                → guarda el record pendiente, si lo hay
   ├─ createBoard()                  → matriz vacía
   ├─ next = randomPiece()
   ├─ spawn()                        → mueve next a current y genera nueva next
@@ -169,7 +191,7 @@ Cuando una pieza recién generada ya colisiona al aparecer (`spawn`), se dispara
 03-tetris/
 ├── index.html      # Estructura del DOM y canvas
 ├── style.css       # Estilos del juego (dark theme)
-├── game.js         # Toda la lógica del Tetris (~300 líneas)
+├── game.js         # Toda la lógica del Tetris y los records (~550 líneas)
 └── README.md
 ```
 

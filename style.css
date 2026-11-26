@@ -11,7 +11,7 @@
   --kbd-bg: #22223a;
   --kbd-border: #3a3a5a;
   --kbd-text: #aaa;
-  --overlay-bg: rgba(10, 10, 20, 0.75);
+  --overlay-bg: rgba(15, 15, 23, 0.85);
   --danger: #e57373;
   --shadow: rgba(0, 0, 0, 0.6);
   --btn-text: #0f0f17;
@@ -193,8 +193,9 @@ kbd {
   display: none;
 }
 
-.overlay-box button {
-  min-width: 200px;
+.btn {
+  background: var(--accent);
+  color: var(--btn-text);
   border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 10px 28px;
@@ -205,27 +206,26 @@ kbd {
   transition: background 0.15s;
 }
 
-#resume-btn,
-#restart-btn {
-  background: var(--accent);
-  color: var(--btn-text);
-}
-
-#resume-btn:hover,
-#restart-btn:hover {
+.btn:hover {
   background: var(--accent-hover);
 }
 
-#controls-btn {
+/* Botones apilados del overlay (no afecta a "Guardar", que va en su fila) */
+.overlay-box > .btn,
+.pause-options > .btn {
+  min-width: 200px;
+}
+
+.btn-outline {
   background: var(--canvas-bg);
   color: var(--text);
 }
 
-#controls-btn:hover {
+.btn-outline:hover {
   background: var(--kbd-bg);
 }
 
-.overlay-box button:focus-visible,
+.overlay button:focus-visible,
 .start-level select:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
@@ -266,6 +266,154 @@ kbd {
 .hint {
   font-size: 12px;
   color: var(--muted);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---- Records ---- */
+.overlay-heading {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+}
+
+.records {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.records .label,
+.record-form small,
+.storage-warning {
+  color: var(--muted);
+}
+
+.records-list {
+  list-style: none;
+}
+
+.records-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--border);
+  font-size: 14px;
+}
+
+.records-list li.highlight {
+  background: var(--kbd-bg);
+  border-color: var(--accent);
+  border-radius: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.record-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+  text-align: left;
+}
+
+.record-score {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+}
+
+.records-empty {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.records-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+
+.records-stats dd {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+#record-message {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+#record-message:empty {
+  display: none;
+}
+
+.record-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.record-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+#player-name {
+  width: 180px;
+  background: var(--canvas-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  user-select: text;
+}
+
+#player-name:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.record-form .btn {
+  padding: 8px 16px;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--danger);
+}
+
+.btn-secondary:disabled {
+  color: var(--muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.storage-warning {
+  max-width: 300px;
+  font-size: 11px;
 }
 
 /* ---- Toggle de tema ---- */
