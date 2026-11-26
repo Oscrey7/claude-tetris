@@ -15,6 +15,42 @@ const COLORS = [
   '#ffb74d', // L - orange
 ];
 
+// Paletas del resto de skins, con el mismo orden que COLORS (I, O, T, S, Z, J, L)
+const NEON_COLORS = [null, '#00f0ff', '#fff200', '#d94bff', '#39ff14', '#ff2a55', '#5c8dff', '#ff9100'];
+const PASTEL_COLORS = [null, '#9fdfe8', '#ffe08a', '#cdb0ee', '#aee0b0', '#f6a9b0', '#a9c4f5', '#ffc59e'];
+const PIXEL_COLORS = [null, '#22b8e6', '#f2c81c', '#9b4fd6', '#45b845', '#dc3f3b', '#7ba3ee', '#ee8422'];
+
+// Cada skin define su paleta, la opacidad de la pieza fantasma y la función que
+// pinta un bloque a partir de su esquina superior izquierda. El resto del aspecto
+// de la página se define en style.css con [data-skin="..."].
+const SKINS = {
+  retro:  { colors: COLORS,        ghostAlpha: 0.2, paint: paintRetro },
+  neon:   { colors: NEON_COLORS,   ghostAlpha: 0.5, paint: paintNeon, forceDark: true },
+  pastel: { colors: PASTEL_COLORS, ghostAlpha: 0.35, paint: paintPastel },
+  pixel:  { colors: PIXEL_COLORS,  ghostAlpha: 0.3, paint: paintPixel },
+};
+
+// Textura del skin pixel art: l = luz, w = brillo, s = moteado, d = sombra
+const PIXEL_PATTERN = [
+  'llllllllld',
+  'lww.....sd',
+  'lw...s...d',
+  'l..s...l.d',
+  'l.....s..d',
+  'l.s.l....d',
+  'l......s.d',
+  'l..s.....d',
+  'ls....s.sd',
+  'dddddddddd',
+];
+const PIXEL_TONES = {
+  l: 'rgba(255,255,255,0.35)',
+  w: 'rgba(255,255,255,0.7)',
+  s: 'rgba(0,0,0,0.18)',
+  d: 'rgba(0,0,0,0.4)',
+};
+const pixelTiles = new Map(); // un mosaico pre-renderizado por color y tamaño
+
 const PIECES = [
   null,
   [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
@@ -67,7 +103,7 @@ const storageWarnings = document.querySelectorAll('.storage-warning');
 // Teclas de juego pulsadas desde que la partida se (re)anudó
 const activeKeys = new Set();
 
-let board, current, next, score, lines, level, startLevel, paused, gameOver, lastTime, dropAccum, dropInterval, animId, started, combo, pendingScore, highlightIndex;
+let board, current, next, score, lines, level, startLevel, paused, gameOver, lastTime, dropAccum, dropInterval, animId, started, combo, pendingScore, highlightIndex, skin;
 
 /* ---- Records (localStorage) ---- */
 
@@ -351,16 +387,95 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
-function drawBlock(context, x, y, colorIndex, size, alpha) {
+function drawBlock(context, x, y, colorIndex, size, ghost = false) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
-  context.globalAlpha = alpha ?? 1;
+  // save/restore evita que shadowBlur, globalAlpha, etc. afecten a otros dibujos
+  context.save();
+  context.globalAlpha = ghost ? skin.ghostAlpha : 1;
+  skin.paint(context, x * size, y * size, size, skin.colors[colorIndex], ghost);
+  context.restore();
+}
+
+function paintRetro(context, px, py, size, color) {
   context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  context.fillRect(px + 1, py + 1, size - 2, size - 2);
   // highlight
   context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  context.globalAlpha = 1;
+  context.fillRect(px + 1, py + 1, size - 2, 4);
+}
+
+function paintNeon(context, px, py, size, color, ghost) {
+  context.shadowColor = color;
+  context.shadowBlur = ghost ? 6 : 14;
+  context.strokeStyle = color;
+  context.lineWidth = 2;
+  context.strokeRect(px + 3, py + 3, size - 6, size - 6);
+  if (ghost) return;
+  context.shadowBlur = 0;
+  context.globalAlpha = 0.35;
+  context.fillStyle = color;
+  context.fillRect(px + 4, py + 4, size - 8, size - 8);
+  // núcleo claro del tubo
+  context.globalAlpha = 0.6;
+  context.strokeStyle = '#ffffff';
+  context.lineWidth = 0.5;
+  context.strokeRect(px + 3, py + 3, size - 6, size - 6);
+}
+
+function roundedRectPath(context, x, y, w, h, radius) {
+  context.beginPath();
+  context.moveTo(x + radius, y);
+  context.arcTo(x + w, y, x + w, y + h, radius);
+  context.arcTo(x + w, y + h, x, y + h, radius);
+  context.arcTo(x, y + h, x, y, radius);
+  context.arcTo(x, y, x + w, y, radius);
+  context.closePath();
+}
+
+function paintPastel(context, px, py, size, color, ghost) {
+  roundedRectPath(context, px + 1.5, py + 1.5, size - 3, size - 3, 8);
+  context.fillStyle = color;
+  context.fill();
+  if (ghost) {
+    context.globalAlpha = 1;
+    context.strokeStyle = color;
+    context.lineWidth = 1.5;
+    context.stroke();
+    return;
+  }
+  context.strokeStyle = 'rgba(0,0,0,0.12)';
+  context.lineWidth = 1;
+  context.stroke();
+  // brillo suave
+  roundedRectPath(context, px + 5, py + 4, size - 10, 7, 3.5);
+  context.fillStyle = 'rgba(255,255,255,0.45)';
+  context.fill();
+}
+
+function getPixelTile(color, size) {
+  const key = `${color}-${size}`;
+  let tile = pixelTiles.get(key);
+  if (tile) return tile;
+  tile = document.createElement('canvas');
+  tile.width = tile.height = size;
+  const tileCtx = tile.getContext('2d');
+  const dot = size / PIXEL_PATTERN.length;
+  tileCtx.fillStyle = color;
+  tileCtx.fillRect(0, 0, size, size);
+  for (let r = 0; r < PIXEL_PATTERN.length; r++) {
+    for (let c = 0; c < PIXEL_PATTERN[r].length; c++) {
+      const tone = PIXEL_TONES[PIXEL_PATTERN[r][c]];
+      if (!tone) continue;
+      tileCtx.fillStyle = tone;
+      tileCtx.fillRect(c * dot, r * dot, dot, dot);
+    }
+  }
+  pixelTiles.set(key, tile);
+  return tile;
+}
+
+function paintPixel(context, px, py, size, color) {
+  context.drawImage(getPixelTile(color, size), px, py);
 }
 
 function drawGrid() {
@@ -394,7 +509,7 @@ function draw() {
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
       if (current.shape[r][c])
-        drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, 0.2);
+        drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, true);
 
   // current piece
   for (let r = 0; r < current.shape.length; r++)
@@ -583,13 +698,10 @@ nameInput.addEventListener('keydown', e => {
 window.addEventListener('pagehide', commitPending);
 
 const themeBtn = document.getElementById('theme-toggle');
+const skinButtons = document.querySelectorAll('#skin-selector button');
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('theme', theme); } catch (e) { /* sin almacenamiento */ }
-  const light = theme === 'light';
-  themeBtn.setAttribute('aria-pressed', String(light));
-  themeBtn.textContent = light ? '☀️ Claro' : '🌙 Oscuro';
+// Redibuja los canvas al momento, también en pausa o game over
+function redraw() {
   if (current && next) {
     draw();
     drawNext();
@@ -599,11 +711,44 @@ function setTheme(theme) {
   }
 }
 
+// Un skin con forceDark ignora el tema claro sin borrar la preferencia guardada
+function updateThemeButton() {
+  const forced = Boolean(skin.forceDark);
+  const light = !forced && document.documentElement.dataset.theme === 'light';
+  themeBtn.disabled = forced;
+  themeBtn.title = forced ? 'Este skin usa siempre fondo negro' : '';
+  themeBtn.setAttribute('aria-pressed', String(light));
+  themeBtn.textContent = light ? '☀️ Claro' : '🌙 Oscuro';
+}
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem('theme', theme); } catch (e) { /* sin almacenamiento */ }
+  updateThemeButton();
+  redraw();
+}
+
+function setSkin(name) {
+  const id = Object.hasOwn(SKINS, name) ? name : 'retro';
+  skin = SKINS[id];
+  document.documentElement.dataset.skin = id;
+  try { localStorage.setItem('skin', id); } catch (e) { /* sin almacenamiento */ }
+  skinButtons.forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.skinOption === id)));
+  updateThemeButton();
+  redraw();
+}
+
 themeBtn.addEventListener('click', () => {
   setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
   themeBtn.blur(); // evita que Space/Enter vuelvan a activar el botón
 });
 
+skinButtons.forEach(btn => btn.addEventListener('click', () => {
+  setSkin(btn.dataset.skinOption);
+  btn.blur(); // evita que Space/Enter vuelvan a activar el botón
+}));
+
+setSkin(document.documentElement.dataset.skin);
 setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 
 renderRecords(); // la partida empieza al pulsar "Jugar" en la pantalla de inicio
