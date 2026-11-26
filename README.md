@@ -17,6 +17,7 @@ Implementación del clásico **Tetris** en JavaScript vanilla, usando HTML5 Canv
     - [Opción 1: abrir el archivo directamente](#opción-1-abrir-el-archivo-directamente)
     - [Opción 2: servidor local (recomendado)](#opción-2-servidor-local-recomendado)
   - [Controles](#controles)
+  - [Skins](#skins)
   - [Cómo funciona](#cómo-funciona)
     - [1. `index.html`](#1-indexhtml)
     - [2. `style.css`](#2-stylecss)
@@ -42,6 +43,8 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Sistema de puntuación** clásico de Tetris (100 / 300 / 500 / 800 multiplicado por nivel).
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Pausa** y **Game Over** con opción de reinicio.
+- **Tema claro / oscuro** (oscuro por defecto).
+- **Skins visuales** (Retro, Neon, Pastel y Pixel art) que se cambian sin recargar. Ver [Skins](#skins).
 
 ---
 
@@ -86,6 +89,23 @@ Después abre `http://localhost:8000` en el navegador.
 | `Espacio` | Hard drop (caída instantánea)     |
 | `P`       | Pausar / reanudar                 |
 
+El tema y el skin se eligen con los botones de la parte superior de la pantalla. Al hacer clic no retienen el foco, así que no interfieren con el teclado.
+
+---
+
+## Skins
+
+El selector `SKIN` cambia al momento el tablero, la pieza fantasma, la vista previa y el estilo de la página, también en pausa o en Game Over.
+
+| Skin      | Aspecto                                           | Tema claro / oscuro    |
+| --------- | ------------------------------------------------- | ---------------------- |
+| Retro     | Bloques cuadrados y colores planos (por defecto)  | Ambos                  |
+| Neon      | Fondo negro y brillo con `shadowBlur`             | Siempre fondo negro    |
+| Pastel    | Colores suaves y bordes redondeados               | Ambos                  |
+| Pixel art | Textura pixelada sobre cada bloque, bordes rectos | Ambos                  |
+
+La elección se guarda en `localStorage` (clave `skin`). Si el valor no es válido o el almacenamiento no está disponible, se usa Retro. Con Neon el botón de tema queda deshabilitado y tu preferencia se recupera al cambiar a otro skin.
+
 ---
 
 ## Cómo funciona
@@ -99,10 +119,11 @@ Define la estructura visual:
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel lateral con `SCORE`, `LINES`, `LEVEL`, vista de la siguiente pieza y la lista de controles.
 - Un overlay para los estados **PAUSA** y **GAME OVER**.
+- El botón de tema claro/oscuro y el selector de skin.
 
 ### 2. `style.css`
 
-Aporta el aspecto visual con estética _dark / retro arcade_: fondo oscuro, tipografía monoespaciada para los marcadores y _backdrop blur_ en los overlays.
+Aporta el aspecto visual con estética _dark / retro arcade_: fondo oscuro, tipografía monoespaciada para los marcadores y _backdrop blur_ en los overlays. Los colores son variables CSS que redefinen el tema claro (`[data-theme="light"]`) y cada skin (`[data-skin="..."]`).
 
 ### 3. `game.js`
 
@@ -116,7 +137,8 @@ Contiene toda la lógica del juego. A grandes rasgos:
 - **Limpieza de líneas** (`clearLines`): recorre el tablero de abajo hacia arriba; cada fila completa se elimina y se inserta una vacía en la cima.
 - **Puntuación**: usa la tabla clásica `[0, 100, 300, 500, 800]` multiplicada por el nivel actual; el hard drop suma 2 puntos por celda recorrida y el soft drop 1 punto por fila.
 - **Nivel y velocidad**: el nivel sube cada 10 líneas; la velocidad de caída se calcula como `max(100, 1000 − (level − 1) × 90)` milisegundos.
-- **Ghost piece** (`ghostY`): proyecta la posición final de la pieza actual hacia abajo y la dibuja con `globalAlpha = 0.2`.
+- **Ghost piece** (`ghostY`): proyecta la posición final de la pieza actual hacia abajo y la dibuja semitransparente (opacidad `ghostAlpha` del skin).
+- **Skins** (`SKINS`, `setSkin`): cada skin aporta su paleta, la opacidad de la pieza fantasma y la función que pinta un bloque; `drawBlock` delega en el skin activo.
 
 ### Flujo del juego
 
@@ -157,8 +179,8 @@ Cuando una pieza recién generada ya colisiona al aparecer (`spawn`), se dispara
 ```
 03-tetris/
 ├── index.html      # Estructura del DOM y canvas
-├── style.css       # Estilos del juego (dark theme)
-├── game.js         # Toda la lógica del Tetris (~300 líneas)
+├── style.css       # Estilos del juego, temas y skins
+├── game.js         # Toda la lógica del Tetris y el dibujo de los skins
 └── README.md
 ```
 
@@ -173,7 +195,8 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `COLS`         | Columnas del tablero                     | `10`                  |
 | `ROWS`         | Filas del tablero                        | `20`                  |
 | `BLOCK`        | Tamaño en píxeles de cada celda          | `30`                  |
-| `COLORS`       | Paleta de colores por tipo de pieza      | 7 colores             |
+| `COLORS`       | Paleta del skin Retro por tipo de pieza  | 7 colores             |
+| `*_COLORS`     | Paletas de Neon, Pastel y Pixel art      | 7 colores cada una    |
 | `LINE_SCORES`  | Puntos por 1, 2, 3 o 4 líneas eliminadas | `[0,100,300,500,800]` |
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
 

@@ -226,3 +226,211 @@ kbd {
 .theme-toggle:hover {
   border-color: var(--accent);
 }
+
+.theme-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  border-color: var(--border);
+}
+
+/* ---- Selector de skin ---- */
+.skin-selector {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skin-selector button {
+  background: var(--canvas-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skin-selector button:hover {
+  border-color: var(--accent);
+}
+
+.skin-selector button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--btn-text);
+}
+
+/* En ventanas estrechas el selector pasa encima del título para no tapar el tablero */
+@media (max-width: 760px) {
+  body {
+    flex-direction: column;
+  }
+
+  .skin-selector {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    margin: 60px 0 12px;
+  }
+}
+
+/* ---- Skins ----
+   Retro no define nada: usa los estilos base y respeta el tema claro/oscuro. */
+
+/* Neon: fondo negro en cualquier tema */
+:root[data-skin="neon"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --text: #e6fbff;
+  --accent: #00f0ff;
+  --accent-hover: #8ff8ff;
+  --canvas-bg: #000000;
+  --border: #0b6f7a;
+  --label: #c77dff;
+  --muted: #8fb8c0;
+  --grid: #0e1c26;
+  --kbd-bg: #04141a;
+  --kbd-border: #0b6f7a;
+  --kbd-text: #00f0ff;
+  --overlay-bg: rgba(0, 0, 0, 0.35);
+  --danger: #ff2bd6;
+  --shadow: rgba(0, 240, 255, 0.4);
+  --btn-text: #000000;
+}
+
+:root[data-skin="neon"] :is(.title, .value, #overlay-title) {
+  text-shadow: 0 0 6px currentColor, 0 0 18px currentColor;
+}
+
+:root[data-skin="neon"] :is(#next-canvas, #restart-btn, .skin-selector button[aria-pressed="true"]) {
+  box-shadow: 0 0 14px var(--shadow);
+}
+
+/* Pastel */
+:root[data-skin="pastel"] {
+  --bg: #2b2536;
+  --text: #f3eafa;
+  --accent: #d7b8f3;
+  --accent-hover: #e8d4fb;
+  --canvas-bg: #373046;
+  --border: #55496b;
+  --label: #b3a3c9;
+  --muted: #c4b8d6;
+  --grid: #413952;
+  --kbd-bg: #443a56;
+  --kbd-border: #62557a;
+  --kbd-text: #e6dcf3;
+  --overlay-bg: rgba(43, 37, 54, 0.45);
+  --danger: #f6a9b0;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --btn-text: #2b2536;
+}
+
+:root[data-skin="pastel"][data-theme="light"] {
+  --bg: #fdf1f5;
+  --text: #4a3f5c;
+  --accent: #8a63b8;
+  --accent-hover: #a37fcd;
+  --canvas-bg: #fffbfd;
+  --border: #ecd3e2;
+  --label: #8d7a9f;
+  --muted: #75658a;
+  --grid: #f6e8f0;
+  --kbd-bg: #f5e3ee;
+  --kbd-border: #dfc2d5;
+  --kbd-text: #5d4d70;
+  --overlay-bg: rgba(253, 241, 245, 0.45);
+  --danger: #c4536b;
+  --shadow: rgba(138, 99, 184, 0.2);
+  --btn-text: #ffffff;
+}
+
+:root[data-skin="pastel"] body {
+  font-family: ui-rounded, 'Trebuchet MS', system-ui, sans-serif;
+}
+
+:root[data-skin="pastel"] :is(#board, #next-canvas, .overlay) {
+  border-radius: 14px;
+}
+
+:root[data-skin="pastel"] kbd {
+  border-radius: 8px;
+}
+
+:root[data-skin="pastel"] #restart-btn {
+  border-radius: 999px;
+}
+
+/* Pixel art: esquinas rectas, bordes gruesos y sombras sin difuminar */
+:root[data-skin="pixel"] {
+  --bg: #1b1c3a;
+  --text: #f4f4f4;
+  --accent: #ffcd3c;
+  --accent-hover: #ffe08a;
+  --canvas-bg: #10112a;
+  --border: #5a5fa8;
+  --label: #8f95d6;
+  --muted: #b4b8e0;
+  --grid: #1d1f42;
+  --kbd-bg: #2c2e5c;
+  --kbd-border: #5a5fa8;
+  --kbd-text: #f4f4f4;
+  --overlay-bg: rgba(16, 17, 42, 0.45);
+  --danger: #ff5d57;
+  --shadow: #08091a;
+  --btn-text: #10112a;
+}
+
+:root[data-skin="pixel"][data-theme="light"] {
+  --bg: #f2e8cf;
+  --text: #2d2a32;
+  --accent: #a8431c;
+  --accent-hover: #c75a2e;
+  --canvas-bg: #fffaea;
+  --border: #6b5b45;
+  --label: #7a6a52;
+  --muted: #5e5140;
+  --grid: #ece0bf;
+  --kbd-bg: #e6d8b3;
+  --kbd-border: #6b5b45;
+  --kbd-text: #2d2a32;
+  --overlay-bg: rgba(242, 232, 207, 0.45);
+  --danger: #b3261e;
+  --shadow: #c4b28a;
+  --btn-text: #fffaea;
+}
+
+:root[data-skin="pixel"] body {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+}
+
+:root[data-skin="pixel"] canvas {
+  image-rendering: pixelated;
+}
+
+:root[data-skin="pixel"] :is(#board, #next-canvas) {
+  border-width: 4px;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+:root[data-skin="pixel"] :is(.overlay, kbd, button, #restart-btn) {
+  border-radius: 0;
+}
+
+:root[data-skin="pixel"] :is(#restart-btn, .theme-toggle, .skin-selector button) {
+  font-family: inherit;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+:root[data-skin="pixel"] .title {
+  text-shadow: 4px 4px 0 var(--shadow);
+}
