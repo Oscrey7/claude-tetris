@@ -57,7 +57,25 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+        <div id="gameover-records" class="records-section" hidden>
+          <p id="record-msg" class="record-msg" aria-live="polite"></p>
+          <form id="name-form" class="name-form" autocomplete="off" hidden>
+            <input id="name-input" type="text" maxlength="12" placeholder="Tu nombre" aria-label="Nombre del jugador" />
+            <button type="submit" class="btn">Guardar</button>
+          </form>
+          <div id="over-records" class="records-list"></div>
+          <button id="over-reset-btn" class="btn btn-secondary" type="button">Borrar récords</button>
+        </div>
         <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <div id="start-screen" class="overlay">
+      <div class="overlay-box records-card">
+        <p class="records-title">RÉCORDS</p>
+        <div id="start-records" class="records-list"></div>
+        <button id="play-btn" class="btn" type="button">Jugar</button>
+        <button id="start-reset-btn" class="btn btn-secondary" type="button">Borrar récords</button>
       </div>
     </div>
   </div>
